@@ -1,5 +1,6 @@
+from venv import create
 from django.http import Http404
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from rest_framework import status
 from rest_framework.views import APIView
 from directory.serializers import LevelSerializer, SubLevelSerialzer
@@ -56,25 +57,58 @@ class SubPortfolioList(APIView):
         return Response(serializer.data)
     
     def post(self, request, format=None):
-        parent = request.data.pop('parent')
-        sublevel_name = request.data['name']
-        
-        # create in level table
-        level = Level.objects.create(name=sublevel_name)
-        print(request.data)
-        
-        level = Level.objects.create(name=parent['name'])
-        request.data['parent'] = level.id
-        print(request.data)
-        serializer = SubLevelSerialzer(data=request.data)
+
+        data = request.data
+        sublevel_name = data.get("name")
+        parent = data.get("parent")
+        if type(parent) != int:
+            level_name = parent.get('name')
+            is_level = Level.objects.filter(name=level_name)
+            if is_level.exists():
+                return Response(
+                    {
+                        'Error': "Unique constraint failed!",
+                        "message": "Level name already exists"
+                    },
+                    status=status.HTTP_403_FORBIDDEN
+                )
+            else:
+                Level.objects.create(name=level_name)
+        serializer = SubLevelSerialzer(data=data)
         if serializer.is_valid():
-            try:
-                serializer.save()
-            except:
-                transaction.rollback()
+            serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+            
+
+
+        # # create sublevel in level table
+        # sublevel_name = request.data['name']
+        # level = Level.objects.create(name=sublevel_name)
+        
+        # parent = request.data.get('parent')
+        # if type(parent) != int:
+        #     # create parent in level table
+        #     level = Level(name=parent['name'])
+        #     try:
+        #         level.save()
+        #     except IntegrityError:
+        #         transaction.rollback()
+        #         return Response(status=status.HTTP_400_BAD_REQUEST)
+        #     request.data['parent'] = level.id
+        # serializer = SubLevelSerialzer(data=request.data)    
+        # if serializer.is_valid():
+        #     try:
+        #         serializer.save()
+        #         return Response(serializer.data, status=status.HTTP_201_CREATED)
+        #     except IntegrityError:
+        #         transaction.rollback()
+        #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        # else:
+        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SubPortfolioDetail(APIView):
     def get_object(self, pk):

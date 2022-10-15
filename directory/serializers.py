@@ -1,11 +1,11 @@
 from pkgutil import read_code
+from unicodedata import name
 from attr import field
 from directory.models import Level
 from rest_framework import serializers
 from directory.models import Level, SubLevel
 
 class SubLevelSerialzer(serializers.ModelSerializer):
-
     class Meta:
         model = SubLevel
         fields = "__all__"
