@@ -1,15 +1,8 @@
-# from django.test import TestCase
-import json, pytest
+import pytest
 from urllib import response
-from django.test import TestCase
 from django.urls import reverse
-from rest_framework import status
-from rest_framework.response import Response
-from rest_framework.test import APITestCase 
-from directory.models import Level
-from directory.serializers import LevelSerializer
-from django.http import HttpResponse, JsonResponse
-
+from directory.models import Level, SubLevel
+from directory.serializers import LevelSerializer, SubLevelSerialzer
 
 # class GetCreatePortfolioListTest(APITestCase):
     
@@ -70,5 +63,13 @@ def test_get_portfolio_detail(client):
     assert response.data == serializer.data
 
 @pytest.mark.django_db
-def test_get_subportfolio_list(client):
-    pass
+def test_get_subportfolio_list(client, level):
+    sublevels = SubLevel.objects.create(name='SubPortfolio', parent=level)
+    url = reverse('subportfolio-list')
+    response = client.get(url)
+    sublevels = SubLevel.objects.all()
+    serializer = SubLevelSerialzer(sublevels, many=True)
+    print(serializer.data)
+    print(response.data)
+    assert response.data == serializer.data
+    assert response.data[0]['parent'] == serializer.data[0]['parent']

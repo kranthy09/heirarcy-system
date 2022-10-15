@@ -1,11 +1,9 @@
 from django.http import Http404
-from django.shortcuts import render
-from rest_framework import status, viewsets
-from rest_framework import mixins
+from rest_framework import status
 from rest_framework.views import APIView
-from directory.serializers import LevelSerializer
+from directory.serializers import LevelSerializer, SubLevelSerialzer
 from rest_framework.response import Response
-from directory.models import Level
+from directory.models import Level, SubLevel
 
 
 class PortfolioList(APIView):
@@ -48,3 +46,18 @@ class PortfolioDetail(APIView):
         level = self.get_object(pk)
         level.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+class SubPortfolioList(APIView):
+    
+    def get(self, request, format=None):
+        sublevels = SubLevel.objects.all()
+        serializer = SubLevelSerialzer(sublevels, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request, format=None):
+        serializer = SubLevelSerialzer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        else:
+            return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
