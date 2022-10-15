@@ -1,27 +1,10 @@
+from msilib import add_tables
 import pytest
 from urllib import response
 from django.urls import reverse
 from directory.models import Level, SubLevel
 from directory.serializers import LevelSerializer, SubLevelSerialzer
 
-# class GetCreatePortfolioListTest(APITestCase):
-    
-#     def test_get_portfolios_list(self):
-#         response = self.client.get('/api/v1/portfolio-list')
-#         self.assertEqual(response.status_code, status.HTTP_200_OK)
-    
-#     def test_get_portfolio_subportfolio_list(self):
-#         response = self.client.get('/api/v1/portfolio-list')
-
-
-
-    
-#     def test_create_portfolio(self):
-#         # url = reverse('potfolio-create')
-#         data = {'name': 'Portfolio'}
-#         response = self.client.post('/api/v1/portfolio-list', data=data)
-#         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-#         self.assertEqual(response.data['name'], "Portfolio")
 
 @pytest.mark.django_db
 def test_list_portfolio(client):
@@ -73,3 +56,13 @@ def test_get_subportfolio_list(client, level):
     print(response.data)
     assert response.data == serializer.data
     assert response.data[0]['parent'] == serializer.data[0]['parent']
+
+@pytest.mark.django_db
+def test_get_subportfolio_detail(client, level):
+    sublevel = SubLevel.objects.create(name='SubPortfolio', parent=level)
+    url = reverse('subportfolio-detail', kwargs={'pk': sublevel.id})
+    response = client.get(url)
+    sublevel = SubLevel.objects.get(name="SubPortfolio")
+    serializer = SubLevelSerialzer(sublevel)
+    assert response.data == serializer.data
+    assert response.data['parent'] == serializer.data['parent']
