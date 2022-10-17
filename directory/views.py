@@ -16,6 +16,7 @@ class PortfolioList(APIView):
         return Response(serializer.data)
     
     def post(self, request, format=None):
+        print(request.data)
         serializer = LevelSerializer(data=request.data)
         if serializer.is_valid():
             serializer.save()
@@ -59,15 +60,17 @@ class SubPortfolioList(APIView):
     def post(self, request, format=None):
 
         data = request.data
+        # print(data)
         sublevel_name = data.get("name")
         parent = data.get("parent")
+        # print("parent: ", parent)
         if type(parent) != int:
             level_name = parent.get('name')
             is_level = Level.objects.filter(name=level_name)
             if is_level.exists():
                 return Response(
                     {
-                        'Error': "Unique constraint failed!",
+                        'error': "Unique constraint failed!",
                         "message": "Level name already exists"
                     },
                     status=status.HTTP_403_FORBIDDEN
@@ -80,35 +83,6 @@ class SubPortfolioList(APIView):
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         else:
             return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-
-
-            
-
-
-        # # create sublevel in level table
-        # sublevel_name = request.data['name']
-        # level = Level.objects.create(name=sublevel_name)
-        
-        # parent = request.data.get('parent')
-        # if type(parent) != int:
-        #     # create parent in level table
-        #     level = Level(name=parent['name'])
-        #     try:
-        #         level.save()
-        #     except IntegrityError:
-        #         transaction.rollback()
-        #         return Response(status=status.HTTP_400_BAD_REQUEST)
-        #     request.data['parent'] = level.id
-        # serializer = SubLevelSerialzer(data=request.data)    
-        # if serializer.is_valid():
-        #     try:
-        #         serializer.save()
-        #         return Response(serializer.data, status=status.HTTP_201_CREATED)
-        #     except IntegrityError:
-        #         transaction.rollback()
-        #         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
-        # else:
-        #     return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
 
 class SubPortfolioDetail(APIView):
     def get_object(self, pk):

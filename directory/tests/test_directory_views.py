@@ -1,6 +1,5 @@
-from msilib import add_tables
+import json
 import pytest
-from urllib import response
 from django.urls import reverse
 from directory.models import Level, SubLevel
 from directory.serializers import LevelSerializer, SubLevelSerialzer
@@ -10,10 +9,9 @@ from directory.serializers import LevelSerializer, SubLevelSerialzer
 def test_list_portfolio(client):
     url = reverse('portfolio-list')
     response = client.get(url)
-
+    print(response.data)
     levels = Level.objects.all()
     expected_data = LevelSerializer(levels, many=True).data
-
     assert response.status_code == 200
     assert response.data == expected_data
 
@@ -24,6 +22,7 @@ def test_create_portfolio(client):
     response = client.post(url, {'name': 'Project'})
     level = Level.objects.get(name='Project')
     levelserializer = LevelSerializer(level)
+    assert response.data['name'] == "Project"
     assert response.data == levelserializer.data
     assert response.status_code == 201
 
@@ -66,3 +65,18 @@ def test_get_subportfolio_detail(client, level):
     serializer = SubLevelSerialzer(sublevel)
     assert response.data == serializer.data
     assert response.data['parent'] == serializer.data['parent']
+
+# @pytest.mark.django_db
+# def test_unique_name_subportfolio_list(client, level):
+#     url = reverse("subportfolio-list")
+#     response = client.post(
+#         url, 
+#         data = {
+#                 "name": "Program",
+#                 "parent": {
+#                     "name": "Root Node"
+#                 }
+#             }
+#     )
+#     assert response.data['error'] == "Unique constraint failed!"
+#     assert response.data['message'] == "Level name already exists"

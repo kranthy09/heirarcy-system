@@ -1,4 +1,3 @@
-
 import pytest
 from directory.models import Level
 
