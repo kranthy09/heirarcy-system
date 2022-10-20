@@ -17,3 +17,11 @@ class ParentList(APIView):
             serializer.save()
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+class ParentDetail(APIView):
+    def get(self, request, pk=None):
+        print(request.data)
+        parent = Parent.objects.get(pk=pk)
+        serializer = ParentSerializer(parent)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+       

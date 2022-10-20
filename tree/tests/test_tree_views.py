@@ -1,3 +1,4 @@
+from unicodedata import name
 import pytest, json
 from django.urls import reverse
 from tree.models import Parent, Child
@@ -20,3 +21,12 @@ def test_post_parent_list_api_view(client, parent_create_data):
     serializer = ParentSerializer(parents, many=True)
     assert resp.data == serializer.data
     assert resp.status_code == 201
+
+@pytest.mark.django_db
+def test_get_parent_detail_api_view(client):
+    parent = Parent.objects.create(name="Portfolio", level=0)
+    url = reverse('parent-detail', kwargs={"pk": parent.id})
+    resp = client.get(url)
+    serializer = ParentSerializer(parent)
+    assert resp.data == serializer.data
+    assert resp.status_code == 200
