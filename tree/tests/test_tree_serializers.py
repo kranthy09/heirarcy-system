@@ -1,7 +1,8 @@
-from cmath import exp
 import json
+from unicodedata import name
 import pytest
 from rest_framework.exceptions import ErrorDetail
+from rest_framework.response import Response
 from tree.models import Parent, Child
 from tree.serializers import ParentSerializer, ChildSerializer
 
@@ -33,7 +34,7 @@ def test_parent_serializer_get_parent_list(parents):
         {
             "id": 2,
             "name": "Sub Portfolio 2",
-            "level": 1,
+            "level": 0,
             "childs": []
         }
     ]
@@ -41,7 +42,8 @@ def test_parent_serializer_get_parent_list(parents):
     serializer = ParentSerializer(parents, many=True)
 
     # assert
-    assert serializer.data == exp_data
+    output_data = json.loads(json.dumps(serializer.data))
+    assert output_data == exp_data
 
 @pytest.mark.django_db
 def test_create_parent_serializer():
@@ -120,27 +122,83 @@ def test_get_single_child_serializer(child):
     assert serializer.data == exp_data
 
 @pytest.mark.django_db
-def test_create_child_serializer_with_parent_id(parent, child_create_data):
+def test_create_child_serializer_with_parent_id(child_create_data):
+    parent_obj = Parent.objects.create(name="portfolio", level=0)
     exp_data = {
         "id": 1,
         "name": "Project",
         "level": 1,
-        "parent": 1
+        "parent": parent_obj.id
     }
+    print(child_create_data)
     serializer = ChildSerializer(data=child_create_data)
     assert serializer.is_valid() == True
     serializer.save()
     assert serializer.data == exp_data
 
 @pytest.mark.django_db
-def test_create_child_serialier_with_parent_obj(parent, create_child_parentobj_data):
+def test_create_child_serialier_with_invalid_parent_field(create_child_parentobj_data):
+    exp_data = {'parent': [ErrorDetail(string='Incorrect type. Expected pk value, received dict.', code='incorrect_type')]}
+    serializer = ChildSerializer(data=create_child_parentobj_data)
+    assert serializer.is_valid() == False
+    assert serializer.errors == exp_data
+
+@pytest.mark.django_db
+def test_get_list_child_serializer(childs):
+    exp_data = [
+        {
+            'id': 1,
+            "name": "Project 1",
+            "level": 1,
+            "parent": 1
+        },
+        {
+            "id": 2,
+            "name": "Project 2",
+            "level": 1,
+            "parent": 2
+        }
+    ]
+    print(childs)
+    serializer = ChildSerializer(childs, many=True)
+    output_data = json.loads(json.dumps(serializer.data))
+    print(output_data)
+    assert output_data == exp_data
+
+@pytest.mark.django_db
+def test_partial_update_parent_serializre(parent):
+    data = {
+        "name": "New Portfolio"
+    }
     exp_data = {
         "id": 1,
-        "name": "Project",
-        "level": 1,
-        "parent": 1
+        "name": "New Portfolio",
+        "level": 0,
+        "childs": []
     }
-    serializer = ChildSerializer(data=create_child_parentobj_data)
+    serializer = ParentSerializer(parent, data=data, partial=True)
+    assert serializer.is_valid() == True
+    print(serializer.errors)
+    serializer.save()
+    assert serializer.data == exp_data
+
+@pytest.mark.django_db
+def test_update_child_serializer(parents):
+    exp_data = {
+        "id": 1,
+        "name": "Sub Portfolio 1",
+        "level": 1,
+        "parent": 2
+    }
+    child = Child.objects.create(name="Sub Portfolio", level=1, parent=parents[0])
+    new_data = {
+        "name": "Sub Portfolio 1",
+        "level": 1,
+        "parent": 2
+    }
+    serializer = ChildSerializer(child, data=new_data)
     assert serializer.is_valid() == True
     serializer.save()
-    assert serializer.data ==exp_data
+    assert serializer.data == exp_data
+    assert serializer.data['name'] == "Sub Portfolio 1"
+
