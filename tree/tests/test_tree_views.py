@@ -30,3 +30,39 @@ def test_get_parent_detail_api_view(client):
     serializer = ParentSerializer(parent)
     assert resp.data == serializer.data
     assert resp.status_code == 200
+
+@pytest.mark.django_db
+def test_update_parent_detail_api_view(client):
+    updated_data = {
+        "name": "New Sub Portfolio",
+        "level": 1
+    }
+    parent = Parent.objects.create(name="Sub Portfolio", level=1)
+    url = reverse('parent-detail',kwargs={"pk": 1})
+    resp = client.put(
+        url,
+        data=updated_data,
+        content_type="application/json"
+    )
+    serializer = ParentSerializer(parent,data=updated_data)
+    assert serializer.is_valid() == True
+    serializer.save()
+    assert serializer.data == resp.data
+
+
+@pytest.mark.django_db
+def test_update_name_field_parent_detail_api_view(client):
+    updated_data = {
+        "name": "New Sub Portfolio"
+    }
+    parent = Parent.objects.create(name="Sub Portfolio", level=1)
+    url = reverse('parent-detail',kwargs={"pk": 1})
+    resp = client.put(
+        url,
+        data=updated_data,
+        content_type="application/json"
+    )
+    serializer = ParentSerializer(parent,data=updated_data, partial=True)
+    assert serializer.is_valid() == True
+    serializer.save()
+    assert serializer.data == resp.data

@@ -18,5 +18,5 @@ class ParentSerializer(serializers.ModelSerializer):
         print(validated_data)
         for key, value in validated_data.items():
             setattr(instance, key, value)
-        # instance.save()
+        instance.save()
         return instance
