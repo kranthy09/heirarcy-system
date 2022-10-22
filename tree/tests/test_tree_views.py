@@ -66,3 +66,15 @@ def test_update_name_field_parent_detail_api_view(client):
     assert serializer.is_valid() == True
     serializer.save()
     assert serializer.data == resp.data
+
+@pytest.mark.django_db
+def test_get_list_child_serializer_api_view(client, childs):
+    url = reverse('child-list')
+    resp = client.get(url)
+    serializer = ChildSerializer(childs, many=True)
+    assert resp.data == serializer.data
+    assert resp.status_code == 200
+
+@pytest.mark.django_db
+def test_post_child_serializer_api_view(client):
+    pass
